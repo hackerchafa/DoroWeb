@@ -1,15 +1,33 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
+const fs = require('fs');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Serve frontend static files
-app.use('/', express.static(path.join(__dirname, '..', 'frontend')));
-// Serve assets explicitly
-app.use('/assets', express.static(path.join(__dirname, '..', 'frontend', 'assets')));
+// Log de requests para debugging
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+
+// Serve frontend static files con headers correctos
+app.use(express.static(path.join(__dirname, '..', 'frontend'), {
+  setHeaders: (res, filepath) => {
+    if (filepath.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    } else if (filepath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    }
+  }
+}));
+
+// Serve assets con cache
+app.use('/assets', express.static(path.join(__dirname, '..', 'frontend', 'assets'), {
+  maxAge: '1d'
+}));
 
 // Ruta para la pantalla de carga
 app.get('/loading', (req, res) => {
@@ -21,13 +39,7 @@ app.get('/portal', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'portal.html'));
 });
 
-// Ruta raíz (/) redirige a loading
-app.get('/', (req, res) => {
-  res.redirect('/loading');
-});
-
 // Genera dinámicamente las cartas a partir de las imágenes en frontend/assets/images
-const fs = require('fs');
 
 function loadCardsFromImages(){
   const imagesDir = path.join(__dirname, '..', 'frontend', 'assets', 'images');
@@ -79,8 +91,18 @@ function loadCardsFromImages(){
 
 app.get('/api/cards', (req, res) => {
   const cards = loadCardsFromImages();
+  console.log(`Cargando ${cards.length} cartas`);
   res.json(cards);
 });
 
+// Ruta raíz (/) redirige a loading
+app.get('/', (req, res) => {
+  res.redirect('/loading');
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server listening on port ${PORT}`);
+  console.log(`📁 Serving static files from: ${path.join(__dirname, '..', 'frontend')}`);
+  console.log(`🖼️  Images directory: ${path.join(__dirname, '..', 'frontend', 'assets', 'images')}`);
+});

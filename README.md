@@ -37,6 +37,13 @@ Abre tu navegador en `http://localhost:3000/`
 
 ## 🌐 Despliegue en Render
 
+### Verificación Previa
+
+Antes de desplegar, ejecuta el script de verificación:
+```powershell
+node verify-deploy.js
+```
+
 ### Opción 1: Usando render.yaml (Recomendado)
 
 1. **Sube tu proyecto a GitHub**
@@ -64,10 +71,48 @@ Abre tu navegador en `http://localhost:3000/`
    - **Name**: doro-app (o el que prefieras)
    - **Environment**: Node
    - **Build Command**: `cd backend && npm install`
-   - **Start Command**: `cd backend && npm start`
+   - **Start Command**: `cd backend && node index.js`
    - **Branch**: master (o main)
+   - **Region**: Oregon (recomendado para plan gratuito)
 
 4. Click en "Create Web Service"
+
+### 🐛 Solución de Problemas Comunes
+
+#### Las cartas no se ven o las animaciones no funcionan
+
+1. **Verifica que los archivos estáticos se sirvan correctamente:**
+   - Abre la consola del navegador (F12)
+   - Revisa si hay errores 404 en archivos CSS/JS
+   - Verifica que `styles.css` y `app.js` se carguen
+
+2. **Revisa los logs en Render:**
+   - Ve a tu servicio en Render Dashboard
+   - Click en "Logs"
+   - Busca errores de servidor
+
+3. **Verifica las rutas de imágenes:**
+   - Las imágenes deben estar en `frontend/assets/images/`
+   - Las rutas en el código deben ser relativas: `/assets/images/nombre.jpg`
+
+4. **Cache del navegador:**
+   - Haz Ctrl+Shift+R para forzar recarga sin cache
+   - O usa modo incógnito para probar
+
+5. **Animación de entrada no se ve:**
+   - Verifica que `/loading` redirija correctamente a `/portal`
+   - Revisa que `loading.html` tenga el GIF de carga
+
+#### Comando de Inicio Correcto
+
+El start command debe ser exactamente:
+```
+cd backend && node index.js
+```
+
+**NO uses:**
+- ❌ `npm start` (puede no funcionar si el environment no está configurado)
+- ❌ `node backend/index.js` (el working directory debe ser backend/)
 
 ### Variables de Entorno (Opcionales)
 - `PORT`: Render lo asigna automáticamente
