@@ -1,0 +1,13 @@
+services:
+  # Servicio Web (Backend + Frontend)
+  - type: web
+    name: doro-app
+    env: node
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    # Render asignará automáticamente un puerto, pero Express lo tomará de process.env.PORT
