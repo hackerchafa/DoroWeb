@@ -91,6 +91,9 @@ function openCardModal(card){
   let startY = 0;
   let currentRotationX = 0;
   let currentRotationY = 0;
+  let targetRotationX = 0;
+  let targetRotationY = 0;
+  let animationFrameId = null;
 
   // Función para obtener coordenadas (mouse o touch)
   const getCoordinates = (e) => {
@@ -100,6 +103,19 @@ function openCardModal(card){
     return { x: e.clientX, y: e.clientY };
   };
 
+  // Función de animación suave usando requestAnimationFrame
+  const animate = () => {
+    // Interpolación suave (lerp) para movimiento fluido
+    currentRotationX += (targetRotationX - currentRotationX) * 0.15;
+    currentRotationY += (targetRotationY - currentRotationY) * 0.15;
+
+    modalBody.style.transform = `translate3d(0, 0, 0) rotateX(${currentRotationX}deg) rotateY(${currentRotationY}deg)`;
+
+    if (isInteracting || Math.abs(targetRotationX - currentRotationX) > 0.01 || Math.abs(targetRotationY - currentRotationY) > 0.01) {
+      animationFrameId = requestAnimationFrame(animate);
+    }
+  };
+
   const onInteractionStart = (e) => {
     e.preventDefault();
     isInteracting = true;
@@ -107,6 +123,11 @@ function openCardModal(card){
     startX = coords.x;
     startY = coords.y;
     modalBody.classList.add('dragging');
+    
+    // Iniciar animación
+    if (!animationFrameId) {
+      animationFrameId = requestAnimationFrame(animate);
+    }
   };
 
   const onInteractionMove = (e) => {
@@ -117,13 +138,11 @@ function openCardModal(card){
     const deltaX = coords.x - startX;
     const deltaY = coords.y - startY;
 
-    currentRotationY += deltaX * 0.5;
-    currentRotationX -= deltaY * 0.5;
+    targetRotationY += deltaX * 0.5;
+    targetRotationX -= deltaY * 0.5;
 
     // Limitar rotación X
-    currentRotationX = Math.max(-30, Math.min(30, currentRotationX));
-
-    modalBody.style.transform = `rotateX(${currentRotationX}deg) rotateY(${currentRotationY}deg)`;
+    targetRotationX = Math.max(-30, Math.min(30, targetRotationX));
 
     startX = coords.x;
     startY = coords.y;
@@ -139,7 +158,13 @@ function openCardModal(card){
     modal.setAttribute('aria-hidden', 'true');
     currentRotationX = 0;
     currentRotationY = 0;
-    modalBody.style.transform = 'rotateX(0deg) rotateY(0deg)';
+    targetRotationX = 0;
+    targetRotationY = 0;
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+    modalBody.style.transform = 'translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg)';
     
     // Remover eventos de mouse
     modalBody.removeEventListener('mousedown', onInteractionStart);
