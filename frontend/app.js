@@ -86,24 +86,36 @@ function openCardModal(card){
   modal.setAttribute('aria-hidden', 'false');
 
   // Variables para rotación interactiva
-  let isMouseDown = false;
+  let isInteracting = false;
   let startX = 0;
   let startY = 0;
   let currentRotationX = 0;
   let currentRotationY = 0;
 
-  const onMouseDown = (e) => {
-    isMouseDown = true;
-    startX = e.clientX;
-    startY = e.clientY;
+  // Función para obtener coordenadas (mouse o touch)
+  const getCoordinates = (e) => {
+    if (e.touches && e.touches[0]) {
+      return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+    return { x: e.clientX, y: e.clientY };
+  };
+
+  const onInteractionStart = (e) => {
+    e.preventDefault();
+    isInteracting = true;
+    const coords = getCoordinates(e);
+    startX = coords.x;
+    startY = coords.y;
     modalBody.classList.add('dragging');
   };
 
-  const onMouseMove = (e) => {
-    if (!isMouseDown) return;
+  const onInteractionMove = (e) => {
+    if (!isInteracting) return;
+    e.preventDefault();
 
-    const deltaX = e.clientX - startX;
-    const deltaY = e.clientY - startY;
+    const coords = getCoordinates(e);
+    const deltaX = coords.x - startX;
+    const deltaY = coords.y - startY;
 
     currentRotationY += deltaX * 0.5;
     currentRotationX -= deltaY * 0.5;
@@ -113,12 +125,12 @@ function openCardModal(card){
 
     modalBody.style.transform = `rotateX(${currentRotationX}deg) rotateY(${currentRotationY}deg)`;
 
-    startX = e.clientX;
-    startY = e.clientY;
+    startX = coords.x;
+    startY = coords.y;
   };
 
-  const onMouseUp = () => {
-    isMouseDown = false;
+  const onInteractionEnd = () => {
+    isInteracting = false;
     modalBody.classList.remove('dragging');
   };
 
@@ -128,16 +140,31 @@ function openCardModal(card){
     currentRotationX = 0;
     currentRotationY = 0;
     modalBody.style.transform = 'rotateX(0deg) rotateY(0deg)';
-    modalBody.removeEventListener('mousedown', onMouseDown);
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
+    
+    // Remover eventos de mouse
+    modalBody.removeEventListener('mousedown', onInteractionStart);
+    document.removeEventListener('mousemove', onInteractionMove);
+    document.removeEventListener('mouseup', onInteractionEnd);
+    
+    // Remover eventos táctiles
+    modalBody.removeEventListener('touchstart', onInteractionStart);
+    modalBody.removeEventListener('touchmove', onInteractionMove);
+    modalBody.removeEventListener('touchend', onInteractionEnd);
+    
     document.getElementById('modal-close').removeEventListener('click', close);
     document.getElementById('modal-backdrop').removeEventListener('click', close);
   };
 
-  modalBody.addEventListener('mousedown', onMouseDown);
-  document.addEventListener('mousemove', onMouseMove);
-  document.addEventListener('mouseup', onMouseUp);
+  // Eventos de mouse (desktop)
+  modalBody.addEventListener('mousedown', onInteractionStart);
+  document.addEventListener('mousemove', onInteractionMove);
+  document.addEventListener('mouseup', onInteractionEnd);
+  
+  // Eventos táctiles (móvil)
+  modalBody.addEventListener('touchstart', onInteractionStart, { passive: false });
+  modalBody.addEventListener('touchmove', onInteractionMove, { passive: false });
+  modalBody.addEventListener('touchend', onInteractionEnd);
+  
   document.getElementById('modal-close').addEventListener('click', close);
   document.getElementById('modal-backdrop').addEventListener('click', close);
 }
